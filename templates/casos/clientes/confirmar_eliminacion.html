@@ -1,0 +1,21 @@
+{% extends "casos/base.html" %}
+
+{% block titulo %}Eliminar cliente | Gestión de Casos{% endblock %}
+
+{% block contenido %}
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card border-danger shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="h3 text-danger">Eliminar cliente</h1>
+                    <p>¿Confirmas que quieres eliminar a <strong>{{ cliente.nombres }}</strong>?</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <button class="btn btn-danger" type="submit">Sí, eliminar</button>
+                        <a class="btn btn-outline-secondary" href="{% url 'casos:lista_clientes' %}">Cancelar</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

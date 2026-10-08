@@ -1,0 +1,153 @@
+{% extends "casos/base.html" %}
+
+{% block titulo %}{{ caso.codigo }} | Gestión de Casos{% endblock %}
+
+{% block contenido %}
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <a class="small text-decoration-none" href="{% url 'casos:lista_casos' %}">&larr; Volver a los casos</a>
+            <h1 class="h2 mt-2 mb-1">{{ caso.codigo }} — {{ caso.titulo }}</h1>
+            <p class="text-secondary mb-0">Detalle y movimientos del caso.</p>
+        </div>
+        {% if caso.estado.permite_pagos %}
+            <span class="badge fs-6 bg-success">{{ caso.estado.nombre }}</span>
+        {% else %}
+            <span class="badge fs-6 bg-danger">{{ caso.estado.nombre }}</span>
+        {% endif %}
+    </div>
+    {% if not caso.estado.permite_pagos %}
+        <div class="alert alert-warning" role="alert">
+            <strong>Este caso no admite pagos</strong>
+        </div>
+    {% endif %}
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <section class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Información del caso</h2>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-secondary">Cliente</dt>
+                        <dd class="col-sm-8">{{ caso.cliente }}</dd>
+                        <dt class="col-sm-4 text-secondary">Fecha de inicio</dt>
+                        <dd class="col-sm-8">{{ caso.fecha_inicio|date:"d/m/Y" }}</dd>
+                        <dt class="col-sm-4 text-secondary">Descripción</dt>
+                        <dd class="col-sm-8">{{ caso.descripcion }}</dd>
+                        <dt class="col-sm-4 text-secondary">Abogados</dt>
+                        <dd class="col-sm-8">
+                            {% for abogado in caso.abogados.all %}
+                                <span class="badge bg-secondary me-1">{{ abogado }}</span>
+                            {% empty %}
+                                <span class="text-secondary">Sin abogados asignados</span>
+                            {% endfor %}
+                        </dd>
+                    </dl>
+                </div>
+            </section>
+        </div>
+        <div class="col-lg-5">
+            <section class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Expedientes</h2>
+                    <div class="list-group list-group-flush">
+                        {% for expediente in expedientes %}
+                            <div class="list-group-item px-0">
+                                <div class="fw-semibold">{{ expediente.numero }}</div>
+                                <div class="small text-secondary">{{ expediente.juzgado }} · {{ expediente.fecha_presentacion|date:"d/m/Y" }}</div>
+                                {% if expediente.documento %}
+                                    <a class="btn btn-sm btn-outline-primary mt-2" href="{{ expediente.documento.url }}" download>
+                                        Descargar documento
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% empty %}
+                            <p class="text-secondary mb-0">Este caso no tiene expedientes.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <section class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                <h2 class="h5 mb-0">Pagos</h2>
+                <span class="text-success fw-bold">Total: {{ caso.total_pagado|floatformat:2 }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Fecha</th><th>Descripción</th><th class="text-end">Monto</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for pago in pagos %}
+                            <tr>
+                                <td>{{ pago.fecha|date:"d/m/Y" }}</td>
+                                <td>{{ pago.descripcion }}</td>
+                                <td class="text-end">{{ pago.monto|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="3" class="text-center text-secondary py-4">Este caso no tiene pagos registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="card border-0 shadow-sm mt-4">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3">Registrar pago</h2>
+            {% if not caso.estado.permite_pagos %}
+                <p class="text-secondary">El servidor rechazará cualquier intento de registrar pagos en este estado.</p>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="registrar_pago">
+                {% if pago_form.non_field_errors %}
+                    <div class="alert alert-danger">{{ pago_form.non_field_errors }}</div>
+                {% endif %}
+                <div class="row g-3">
+                    {% for field in pago_form %}
+                        <div class="col-md-4">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button class="btn btn-primary mt-3" type="submit">
+                    {% if caso.estado.permite_pagos %}Guardar pago{% else %}Intentar registrar pago{% endif %}
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <section class="card border-0 shadow-sm mt-4">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3">Adjuntar expediente</h2>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="adjuntar_expediente">
+                {% if expediente_form.non_field_errors %}
+                    <div class="alert alert-danger">{{ expediente_form.non_field_errors }}</div>
+                {% endif %}
+                <div class="row g-3">
+                    {% for field in expediente_form %}
+                        <div class="{% if field.name == 'documento' %}col-12{% else %}col-md-4{% endif %}">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button class="btn btn-outline-primary mt-3" type="submit">Guardar expediente</button>
+            </form>
+        </div>
+    </section>
+{% endblock %}

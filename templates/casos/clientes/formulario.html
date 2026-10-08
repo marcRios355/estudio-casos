@@ -1,0 +1,36 @@
+{% extends "casos/base.html" %}
+
+{% block titulo %}{{ titulo }} | Gestión de Casos{% endblock %}
+
+{% block contenido %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <div class="mb-4">
+                <h1 class="h2 mb-1">{{ titulo }}</h1>
+                <p class="text-secondary mb-0">Completa los datos del cliente.</p>
+            </div>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                        {% endif %}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                                {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endfor %}
+                        <div class="d-flex gap-2 mt-4">
+                            <button class="btn btn-primary" type="submit">Guardar</button>
+                            <a class="btn btn-outline-secondary" href="{% url 'casos:lista_clientes' %}">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

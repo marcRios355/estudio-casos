@@ -1,0 +1,86 @@
+{% extends "casos/base.html" %}
+
+{% block titulo %}Casos | Gestión de Casos{% endblock %}
+
+{% block contenido %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h1 class="h2 mb-1">Casos</h1>
+            <p class="text-secondary mb-0">Consulta los asuntos legales y su estado.</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <form method="get" class="d-flex align-items-center gap-2">
+                <label class="form-label mb-0" for="estado">Filtrar estado</label>
+                <select class="form-select" id="estado" name="estado">
+                    <option value="">Todos los estados</option>
+                    {% for estado in estados %}
+                        <option value="{{ estado.pk }}" {% if estado_seleccionado == estado.pk %}selected{% endif %}>
+                            {{ estado.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-outline-primary text-nowrap" type="submit">Filtrar</button>
+            </form>
+            <span class="badge rounded-pill text-bg-dark">{{ casos|length }} casos</span>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle shadow-sm mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col">Código</th>
+                            <th scope="col">Caso</th>
+                            <th scope="col">Cliente</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Abogados</th>
+                            <th scope="col" class="text-end">Total pagado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for caso in casos %}
+                            <tr>
+                                <td class="text-nowrap">
+                                    <a class="fw-semibold text-decoration-none" href="{% url 'casos:detalle_caso' caso.pk %}">
+                                        {{ caso.codigo }}
+                                    </a>
+                                </td>
+                                <td>{{ caso.titulo }}</td>
+                                <td>{{ caso.cliente.nombres }}</td>
+                                <td>
+                                    {% if caso.estado.permite_pagos %}
+                                        <span class="badge bg-success">{{ caso.estado.nombre }}</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">{{ caso.estado.nombre }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for abogado in caso.abogados.all %}
+                                            <span class="badge bg-secondary">{{ abogado }}</span>
+                                        {% empty %}
+                                            <span class="text-secondary small">Sin abogados asignados</span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td class="text-end text-success fw-bold text-nowrap">
+                                    {{ caso.total_pagado_lista|floatformat:2 }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="p-3">
+                                    <div class="alert alert-info mb-0" role="status">
+                                        No hay casos registrados.
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
